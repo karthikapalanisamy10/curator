@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "367763715708",
+    "project_id": "curator-922e5",
+    "storage_bucket": "curator-922e5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:367763715708:android:7915aec31b73c3597c3bf9",
+        "android_client_info": {
+          "package_name": "com.SMARTLIFE.curator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "367763715708-1f7f1qfmahfd121ep0eohapv603so8jf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.SMARTLIFE.curator",
+            "certificate_hash": "f0061333516739bba605d20b3f794446cc2985dd"
+          }
+        },
+        {
+          "client_id": "367763715708-9u9a4m0k0g20jdpqiqigab2svubsq759.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9hoqndl5t9AfLoglZIM2iykpL2CKlDa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "367763715708-9u9a4m0k0g20jdpqiqigab2svubsq759.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">CURATOR</string>
+    <string name="smart_life">Smart Life</string>
+    <string name="personal_life_curator">Personal Life Curator</string>
+    <string name="pl_curator">PL CURATOR</string>
+    <string name="smart_planning">Smart planning for a smarter you</string>
+    <string name="mail_id">Mail Id</string>
+    <string name="password">Password</string>
+    <string name="log_in">Login</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="no_account">Don\'t have an account? Sign Up</string>
+    <string name="sign_in">Sign Up</string>
+    <string name="name">Name</string>
+    <string name="terms_policy">By continuing, you agree to our Terms &amp; Privacy Policy</string>
+    <string name="hello_user">Hello, User</string>
+    <string name="ready_day">Ready for your day?</string>
+    <string name="mind_today">What\'s on your mind today?</string>
+    <string name="make_plan">Make Plan</string>
+    <string name="today_task">Today\'s Task</string>
+    <string name="schedule">Schedule</string>
+    <string name="weather_forecast">Weather Forecast</string>
+    <string name="route_traffic">Route &amp; Traffic</string>
+    <string name="profile">Profile</string>
+    <string name="personal_details">Personal details</string>
+    <string name="location_access">Location Access</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="log_out">Log Out</string>
+    <string name="plan_created">Plan Created!</string>
+    <string name="work_hint">Enter work/task</string>
+    <string name="destination_hint">Enter destination</string>
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID.apps.googleusercontent.com</string>
+</resources>

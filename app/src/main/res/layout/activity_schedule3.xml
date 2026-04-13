@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/lightPurple">
+
+    <LinearLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@color/primaryPurple"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/schedule"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/weather_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        app:layout_constraintTop_toBottomOf="@id/top_bar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@color/primaryPurple"
+            android:padding="12dp">
+
+            <ImageView
+                android:id="@+id/iv_current_weather"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_report_image"
+                app:tint="@color/black" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_weather_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/weather_forecast"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_current_condition"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Loading..."
+                    android:textColor="@color/black"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_current_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--°C"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/forecast_container"
+                android:layout_width="wrap_content"
+                android:layout_height="100dp"
+                android:background="@color/primaryPurple"
+                android:orientation="horizontal"
+                android:padding="8dp">
+
+                <!-- Day 1 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MON" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather1" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Day 2 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TUE" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather2" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Day 3 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="WED" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather3" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Day 4 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="THU" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather4" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Day 5 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="FRI" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather5" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Day 6 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SAT" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather6" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Day 7 -->
+                <LinearLayout
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView android:id="@+id/tv_day7" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SUN" android:textColor="@color/black" android:textSize="10sp"/>
+                    <ImageView android:id="@+id/iv_weather7" android:layout_width="32dp" android:layout_height="32dp" android:src="@android:drawable/ic_menu_day" app:tint="@color/black"/>
+                    <TextView android:id="@+id/tv_temp7" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="@color/black" android:textStyle="bold"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/route_section"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav"
+        app:layout_constraintTop_toBottomOf="@id/weather_section">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@color/primaryPurple"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_compass"
+                app:tint="@color/black" />
+
+            <TextView
+                android:id="@+id/tv_route_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/route_traffic"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_open_maps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open Maps"
+                android:textSize="10sp"
+                android:backgroundTint="@color/darkPurple"
+                android:textColor="@color/black"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <EditText
+                android:id="@+id/et_destination"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/destination_hint"
+                android:inputType="textCapWords"
+                android:padding="8dp"
+                android:textColor="@color/black"
+                android:textColorHint="@color/black"
+                android:background="@color/primaryPurple" />
+
+            <Button
+                android:id="@+id/btn_show_map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:padding="8dp"
+                android:text="Show"
+                android:textSize="14sp"
+                android:backgroundTint="@color/darkPurple"
+                android:textColor="@color/black" />
+        </LinearLayout>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@color/primaryPurple"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/nav_home_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <ImageView
+                android:id="@+id/nav_home"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_today"
+                app:tint="@color/black" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Home"
+                android:textColor="@color/black"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/nav_schedule_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <ImageView
+                android:id="@+id/nav_schedule"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_my_calendar"
+                app:tint="@color/black" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Schedule"
+                android:textColor="@color/black"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/nav_profile_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <ImageView
+                android:id="@+id/nav_profile"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="@color/black" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Profile"
+                android:textColor="@color/black"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
