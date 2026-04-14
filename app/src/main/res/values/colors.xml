@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primaryPurple">#ced8a4</color>
-    <color name="darkPurple">#aeb88b</color>
-    <color name="lightPurple">#fff7e7</color>
+    <color name="primaryPurple">#081427</color> <!-- Box Color -->
+    <color name="darkPurple">#040a1a</color>
+    <color name="lightPurple">#c3e0e5</color> <!-- Background Color -->
+    <color name="accentGreen">#ced8a4</color> <!-- The green you like -->
     <color name="lightGray">#F5F5F5</color>
     <color name="gray">#8F8F8F</color>
-    <color name="white">#fff7e7</color>
+    <color name="white">#c3e0e5</color>
     <color name="black">#000000</color>
     <color name="red">#FF0000</color>
+    <color name="text_white">#FFFFFF</color>
 </resources>

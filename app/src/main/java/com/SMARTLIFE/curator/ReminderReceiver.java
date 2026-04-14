@@ -5,11 +5,13 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -19,63 +21,83 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ReminderReceiver extends BroadcastReceiver {
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        String taskTitle = intent.getStringExtra("task");
-        if (taskTitle == null) taskTitle = "Task Reminder";
-        
-        boolean isOneDayBefore = intent.getBooleanExtra("isOneDayBefore", false);
+        String title = intent.getStringExtra("title");
+        String message = intent.getStringExtra("message");
 
-        String displayTitle = isOneDayBefore ? "Upcoming Task Tomorrow" : "Task Reminder";
-        String displayText = isOneDayBefore ? "Don't forget: " + taskTitle : taskTitle;
+        Log.d("ReminderReceiver", "Alarm fired! Title: " + title + ", Message: " + message);
 
-        // Ensure notification channel exists (redundant but safe)
-        createNotificationChannel(context);
+        if (title == null) title = "Task Reminder";
+        if (message == null) message = "You have an upcoming task.";
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "task_reminder")
-                .setSmallIcon(android.R.drawable.ic_popup_reminder)
-                .setContentTitle(displayTitle)
-                .setContentText(displayText)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true);
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        String channelId = "reminder_channel";
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        try {
-            int notificationId = (int) System.currentTimeMillis();
-            notificationManager.notify(notificationId, builder.build());
-            
-            // Log to Firestore so it shows up in the Notification Activity
-            saveNotificationToFirestore(displayTitle, displayText);
-            
-        } catch (SecurityException e) {
-            Log.e("ReminderReceiver", "Notification permission denied", e);
+        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        if (alarmSound == null) {
+            alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
         }
-    }
+        if (alarmSound == null) {
+            alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        }
 
-    private void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("task_reminder", "Curator", NotificationManager.IMPORTANCE_HIGH);
-            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "Reminders",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.enableLights(true);
+            channel.enableVibration(true);
+            channel.setDescription("Task reminders and alerts");
+
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .build();
+            channel.setSound(alarmSound, audioAttributes);
+
             if (manager != null) {
                 manager.createNotificationChannel(channel);
             }
         }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setAutoCancel(true)
+                .setSound(alarmSound)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVibrate(new long[]{0, 500, 200, 500});
+
+        if (manager != null) {
+            int notificationId = (int) System.currentTimeMillis();
+            manager.notify(notificationId, builder.build());
+        }
+
+        // Save to Firebase so it shows in the in-app notification page
+        saveNotificationToFirestore(title, message);
     }
 
     private void saveNotificationToFirestore(String title, String message) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            Map<String, Object> notification = new HashMap<>();
-            notification.put("title", title);
-            notification.put("message", message);
-            notification.put("timestamp", System.currentTimeMillis());
-            notification.put("read", false);
+            Map<String, Object> data = new HashMap<>();
+            data.put("title", title);
+            data.put("message", message);
+            data.put("timestamp", System.currentTimeMillis());
+            data.put("read", false);
 
             FirebaseFirestore.getInstance()
                     .collection("users")
                     .document(user.getUid())
                     .collection("notifications")
-                    .add(notification);
+                    .add(data)
+                    .addOnFailureListener(e -> Log.e("ReminderReceiver", "Firestore save failed", e));
         }
     }
 }

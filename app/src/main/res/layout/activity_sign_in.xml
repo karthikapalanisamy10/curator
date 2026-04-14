@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="&lt; Sign in"
-            android:textColor="@color/black"
+            android:textColor="@color/text_white"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -30,13 +30,13 @@
         android:layout_height="56dp"
         android:layout_marginHorizontal="32dp"
         android:layout_marginTop="60dp"
-        android:background="@color/primaryPurple"
+        android:background="@drawable/rounded_box"
         android:hint="@string/name"
         android:importantForAutofill="no"
         android:inputType="textPersonName"
         android:paddingHorizontal="16dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/black"
+        android:textColor="@color/text_white"
+        android:textColorHint="@color/lightGray"
         app:layout_constraintTop_toBottomOf="@id/top_bar" />
 
     <EditText
@@ -45,14 +45,15 @@
         android:layout_height="56dp"
         android:layout_marginHorizontal="32dp"
         android:layout_marginTop="16dp"
-        android:background="@color/primaryPurple"
+        android:background="@drawable/rounded_box"
         android:hint="@string/mail_id"
         android:importantForAutofill="no"
         android:inputType="textEmailAddress"
         android:paddingHorizontal="16dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/black"
+        android:textColor="@color/text_white"
+        android:textColorHint="@color/lightGray"
         android:drawableEnd="@android:drawable/ic_dialog_email"
+        app:drawableTint="@color/text_white"
         app:layout_constraintTop_toBottomOf="@id/et_name" />
 
     <com.google.android.material.textfield.TextInputLayout
@@ -63,19 +64,20 @@
         android:layout_marginTop="16dp"
         app:hintEnabled="false"
         app:passwordToggleEnabled="true"
+        app:passwordToggleTint="@color/text_white"
         app:layout_constraintTop_toBottomOf="@id/et_email">
 
         <EditText
             android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:background="@color/primaryPurple"
+            android:background="@drawable/rounded_box"
             android:hint="@string/password"
             android:importantForAutofill="no"
             android:inputType="textPassword"
             android:paddingHorizontal="16dp"
-            android:textColor="@color/black"
-            android:textColorHint="@color/black" />
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/lightGray" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
@@ -86,7 +88,8 @@
         android:backgroundTint="@color/darkPurple"
         android:text="@string/sign_in"
         android:textAllCaps="false"
-        android:textColor="@color/black"
+        android:textColor="@color/text_white"
+        app:cornerRadius="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/til_password" />

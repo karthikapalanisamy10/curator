@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -107,13 +108,20 @@ public class ScheduleActivity3 extends AppCompatActivity implements OnMapReadyCa
 
         fetchWeatherData(currentCity);
 
-        // 🔥 BUTTON CLICK - Updated to only show map and weather
+        // Show image initially
+        binding.mapOverlayImage.setVisibility(View.VISIBLE);
+
+        // 🔥 BUTTON CLICK - Updated to only update map and weather
         binding.btnShowMap.setOnClickListener(v -> {
             String location = binding.etDestination.getText().toString().trim();
 
             if (!location.isEmpty()) {
                 currentCity = location;
                 fetchWeatherData(currentCity);
+                
+                // Note: We are no longer hiding the mapOverlayImage here
+                // binding.mapOverlayImage.setVisibility(View.GONE);
+
                 Toast.makeText(this, "Showing for " + currentCity, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Enter destination", Toast.LENGTH_SHORT).show();

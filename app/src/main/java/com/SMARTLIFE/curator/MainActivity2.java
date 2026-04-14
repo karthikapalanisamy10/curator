@@ -18,8 +18,11 @@ import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -32,7 +35,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.security.ProviderInstaller;
@@ -77,14 +79,12 @@ public class MainActivity2 extends AppCompatActivity {
     private DatabaseReference mDatabase;
     private String userId;
     private Calendar calendar = Calendar.getInstance();
-    private Calendar alarmCalendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-        // Update security provider to fix handshake issues
         try {
             ProviderInstaller.installIfNeeded(this);
         } catch (Exception e) {
@@ -103,6 +103,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         createNotificationChannel();
         checkAndRequestNotificationPermission();
+        checkExactAlarmPermission();
 
         btnMakePlan = findViewById(R.id.btn_make_plan);
         navSchedule = findViewById(R.id.nav_schedule);
@@ -119,7 +120,6 @@ public class MainActivity2 extends AppCompatActivity {
         tvWelcomeTitle = findViewById(R.id.tv_welcome_title);
         tvWeatherInfo = findViewById(R.id.tv_weather_info);
 
-        // Fetch name from Personal Details in Realtime Database
         mDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -141,18 +141,15 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
 
-        // Set default dates
         String today = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Calendar.getInstance().getTime());
         etStartDate.setText(today);
         etEndDate.setText(today);
 
-        // Pickers
         etStartDate.setOnClickListener(v -> showDatePicker(etStartDate));
         etEndDate.setOnClickListener(v -> showDatePicker(etEndDate));
         etTaskTime.setOnClickListener(v -> showTimePicker());
 
         loadTasks();
-        
         fetchWeather("Chennai");
 
         btnMakePlan.setOnClickListener(v -> saveTask());
@@ -175,6 +172,16 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    private void checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                startActivity(intent);
+            }
+        }
+    }
+
     private void setDefaultWelcome(FirebaseUser user) {
         String name = user.getDisplayName();
         if (name == null || name.isEmpty()) {
@@ -192,11 +199,6 @@ public class MainActivity2 extends AppCompatActivity {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            
-            alarmCalendar.set(Calendar.YEAR, year);
-            alarmCalendar.set(Calendar.MONTH, month);
-            alarmCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            
             String format = "dd/MM/yyyy";
             SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
             editText.setText(sdf.format(calendar.getTime()));
@@ -205,10 +207,6 @@ public class MainActivity2 extends AppCompatActivity {
 
     private void showTimePicker() {
         new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-            alarmCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            alarmCalendar.set(Calendar.MINUTE, minute);
-            alarmCalendar.set(Calendar.SECOND, 0);
-            
             String timeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
             etTaskTime.setText(timeStr);
         }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
@@ -220,146 +218,155 @@ public class MainActivity2 extends AppCompatActivity {
         String startDateStr = etStartDate.getText().toString().trim();
         String endDateStr = etEndDate.getText().toString().trim();
         String city = etCity.getText().toString().trim();
-        String timeStr = etTaskTime.getText().toString().trim();
+        String time = etTaskTime.getText().toString().trim();
 
-        if (title.isEmpty() || work.isEmpty()) {
-            Toast.makeText(this, "Please fill title and work", Toast.LENGTH_SHORT).show();
+        if (title.isEmpty() || work.isEmpty() || startDateStr.isEmpty() || endDateStr.isEmpty() || city.isEmpty() || time.isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             return;
         }
-        
-        if (city.isEmpty()) city = "Chennai";
-        if (timeStr.isEmpty()) {
-            Calendar now = Calendar.getInstance();
-            timeStr = String.format(Locale.getDefault(), "%02d:%02d", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE));
-        }
 
-        String taskId = db.collection("users").document(userId).collection("tasks").document().getId();
-        long timestamp = System.currentTimeMillis();
+        Map<String, Object> task = new HashMap<>();
+        task.put("title", title);
+        task.put("work", work);
+        task.put("startDate", startDateStr);
+        task.put("endDate", endDateStr);
+        task.put("location", city);
+        task.put("time", time);
+        task.put("timestamp", System.currentTimeMillis());
 
-        Task task = new Task(taskId, title, work, startDateStr, endDateStr, timeStr, city, true, timestamp);
-        
-        db.collection("users").document(userId).collection("tasks").document(taskId)
-            .set(task)
-            .addOnSuccessListener(aVoid -> {
-                // Send immediate notification that plan is created
-                sendImmediateNotification(task);
-                
-                // Schedule primary alarm (3 hours before if possible)
-                scheduleNotification(task, 3, 0, "Upcoming Task Reminder");
-                // Schedule second alarm (5 minutes before)
-                scheduleNotification(task, 0, 5, "Task starting in 5 minutes!");
-                
-                etTaskTitle.setText("");
-                etTaskWork.setText("");
-                etCity.setText("");
-                etTaskTime.setText("");
-                fetchWeather(task.location);
-                Toast.makeText(this, "Plan Created! Notifications scheduled.", Toast.LENGTH_SHORT).show();
-            })
-            .addOnFailureListener(e -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        db.collection("users").document(userId).collection("tasks")
+                .add(task)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(this, "Task Saved Successfully", Toast.LENGTH_SHORT).show();
+                    etTaskTitle.setText("");
+                    etTaskWork.setText("");
+                    etTaskTime.setText("");
+                    loadTasks();
+                    scheduleReminder(title, work, startDateStr, time);
+                    notifyTaskCreated(title, work);
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Error saving task", Toast.LENGTH_SHORT).show());
     }
 
-    private void sendImmediateNotification(Task task) {
-        String title = "Plan Created!";
-        String message = "Task: " + task.title + " has been added to your schedule.";
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "task_reminder")
-                .setSmallIcon(android.R.drawable.ic_popup_reminder)
-                .setContentTitle(title)
+    private void notifyTaskCreated(String title, String work) {
+        String message = "Task \"" + title + "\" for " + work + " has been created successfully!";
+        
+        // 1. Mobile Display Bar Notification
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        String channelId = "reminder_channel";
+        
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
+                .setContentTitle("Task Created")
                 .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true);
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        try {
-            notificationManager.notify((int) System.currentTimeMillis(), builder.build());
-            // Also save to in-app notification page
-            saveNotificationToFirestore(title, message);
-        } catch (SecurityException e) {
-            Log.e("NOTIF", "Permission missing", e);
+        if (manager != null) {
+            manager.notify((int) System.currentTimeMillis(), builder.build());
         }
+
+        // 2. Inside App Notification (Firestore)
+        Map<String, Object> data = new HashMap<>();
+        data.put("title", "Task Created");
+        data.put("message", message);
+        data.put("timestamp", System.currentTimeMillis());
+        data.put("read", false);
+
+        db.collection("users").document(userId).collection("notifications").add(data)
+                .addOnFailureListener(e -> Log.e("NOTIFY", "Firestore save failed", e));
     }
 
-    private void saveNotificationToFirestore(String title, String message) {
-        Map<String, Object> notification = new HashMap<>();
-        notification.put("title", title);
-        notification.put("message", message);
-        notification.put("timestamp", System.currentTimeMillis());
-        notification.put("read", false);
-
-        db.collection("users")
-                .document(userId)
-                .collection("notifications")
-                .add(notification);
-    }
-
-    private void scheduleNotification(Task task, int hoursBefore, int minutesBefore, String reminderType) {
+    private void scheduleReminder(String title, String work, String date, String time) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-            Calendar taskTime = Calendar.getInstance();
-            taskTime.setTime(sdf.parse(task.startDate + " " + task.time));
+            Calendar scheduledTime = Calendar.getInstance();
+            scheduledTime.setTime(sdf.parse(date + " " + time));
+            
+            long taskTime = scheduledTime.getTimeInMillis();
+            long currentTime = System.currentTimeMillis();
 
-            Calendar notifyTime = (Calendar) taskTime.clone();
-            if (hoursBefore > 0) notifyTime.add(Calendar.HOUR_OF_DAY, -hoursBefore);
-            if (minutesBefore > 0) notifyTime.add(Calendar.MINUTE, -minutesBefore);
+            // 3 hours before
+            long reminder3hrs = taskTime - (3 * 60 * 60 * 1000);
+            // 5 minutes before
+            long reminder5min = taskTime - (5 * 60 * 1000);
 
-            if (notifyTime.getTimeInMillis() <= System.currentTimeMillis()) {
-                return; 
+            if (reminder3hrs > currentTime) {
+                setAlarm(reminder3hrs, title, "Reminder: 3 hours left for " + work);
             }
 
-            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            Intent intent = new Intent(this, ReminderReceiver.class);
-            intent.putExtra("task", reminderType + ": " + task.title + " - " + task.work);
-            
-            int uniqueId = (int) (task.timestamp + (hoursBefore * 60) + minutesBefore);
-            
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, uniqueId, intent, 
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-            if (alarmManager != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notifyTime.getTimeInMillis(), pendingIntent);
-                } else {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, notifyTime.getTimeInMillis(), pendingIntent);
-                }
+            if (reminder5min > currentTime) {
+                setAlarm(reminder5min, title, "Reminder: 5 minutes left for " + work);
             }
+
+            // Also notify at the exact time
+            if (taskTime > currentTime) {
+                setAlarm(taskTime, title, "It's time for " + work);
+            }
+
         } catch (Exception e) {
-            Log.e("ALARM", "Error scheduling alarm: " + e.getMessage());
+            Log.e("ALARM", "Error scheduling alarm", e);
+        }
+    }
+
+    private void setAlarm(long time, String title, String message) {
+        Intent intent = new Intent(this, ReminderReceiver.class);
+        intent.putExtra("title", title);
+        intent.putExtra("message", message);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                (int) time, // Use time as unique request code
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (alarmManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent);
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent);
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, time, pendingIntent);
+            }
         }
     }
 
     private void loadTasks() {
+        tasksContainer.removeAllViews();
         db.collection("users").document(userId).collection("tasks")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener((value, error) -> {
-                if (error != null) return;
-                tasksContainer.removeAllViews();
-                if (value != null && !value.isEmpty()) {
-                    boolean first = true;
-                    for (QueryDocumentSnapshot document : value) {
+            .get()
+            .addOnCompleteListener(taskQuery -> {
+                if (taskQuery.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : taskQuery.getResult()) {
                         Task task = document.toObject(Task.class);
-                        if (task != null && !task.completed) {
-                            if (first) {
-                                fetchWeather(task.location);
-                                first = false;
-                            }
-                            addTaskToUI(task);
-                        }
+                        task.id = document.getId();
+                        addTaskToUI(task);
                     }
                 }
             });
     }
 
     private void addTaskToUI(Task task) {
+        LinearLayout outerLayout = new LinearLayout(this);
+        outerLayout.setOrientation(LinearLayout.HORIZONTAL);
+        outerLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        outerLayout.setPadding(0, 0, 0, 16);
+
         LinearLayout itemLayout = new LinearLayout(this);
         itemLayout.setOrientation(LinearLayout.VERTICAL);
         itemLayout.setPadding(32, 24, 32, 24);
-        itemLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.primaryPurple));
+        itemLayout.setBackground(ContextCompat.getDrawable(this, R.drawable.rounded_box));
         
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        layoutParams.setMargins(0, 0, 0, 16);
-        itemLayout.setLayoutParams(layoutParams);
+        itemLayout.setLayoutParams(itemParams);
 
         itemLayout.setOnClickListener(v -> {
             Intent intent = new Intent(this, ScheduleActivity3.class);
@@ -367,42 +374,54 @@ public class MainActivity2 extends AppCompatActivity {
             startActivity(intent);
         });
 
+        // 🔥 LONG CLICK TO DELETE
         itemLayout.setOnLongClickListener(v -> {
-            new AlertDialog.Builder(this)
-                .setTitle("Delete Plan")
-                .setMessage("Delete this plan?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    db.collection("users").document(userId).collection("tasks").document(task.id).delete()
-                        .addOnSuccessListener(aVoid -> Toast.makeText(this, "Plan Deleted", Toast.LENGTH_SHORT).show())
-                        .addOnFailureListener(e -> Toast.makeText(this, "Error deleting: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+            showDeleteDialog(task);
             return true;
         });
 
         TextView titleView = new TextView(this);
         titleView.setText(task.title + " (" + task.location + ")");
         titleView.setTextSize(18);
-        titleView.setTextColor(Color.BLACK);
+        titleView.setTextColor(Color.WHITE);
         titleView.setTypeface(null, Typeface.BOLD);
 
         TextView workView = new TextView(this);
         workView.setText(task.work + " at " + task.time);
         workView.setTextSize(14);
-        workView.setTextColor(Color.BLACK);
+        workView.setTextColor(Color.WHITE);
 
         TextView dateView = new TextView(this);
         dateView.setText("Schedule: " + task.startDate + " to " + task.endDate);
         dateView.setTextSize(12);
-        dateView.setTextColor(ContextCompat.getColor(this, R.color.darkPurple));
+        dateView.setTextColor(ContextCompat.getColor(this, R.color.lightPurple));
 
         itemLayout.addView(titleView);
         itemLayout.addView(workView);
         dateView.setPadding(0, 8, 0, 0);
         itemLayout.addView(dateView);
 
-        tasksContainer.addView(itemLayout);
+        outerLayout.addView(itemLayout);
+        tasksContainer.addView(outerLayout);
+    }
+
+    private void showDeleteDialog(Task task) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Task")
+                .setMessage("Are you sure you want to delete the task: \"" + task.title + "\"?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteTask(task))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteTask(Task task) {
+        db.collection("users").document(userId).collection("tasks").document(task.id)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Task deleted", Toast.LENGTH_SHORT).show();
+                    loadTasks();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Failed to delete task", Toast.LENGTH_SHORT).show());
     }
 
     private void fetchWeather(String city) {
@@ -422,19 +441,12 @@ public class MainActivity2 extends AppCompatActivity {
                 if (addresses != null && !addresses.isEmpty()) {
                     double lat = addresses.get(0).getLatitude();
                     double lon = addresses.get(0).getLongitude();
-                    
-                    String urlString = String.format(Locale.US, 
-                        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current_weather=true", 
-                        lat, lon);
-                    
+                    String urlString = String.format(Locale.US, "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current_weather=true", lat, lon);
                     URL url = new URL(urlString);
                     conn = (HttpsURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     conn.setConnectTimeout(20000);
                     conn.setReadTimeout(20000);
-                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-                    conn.setRequestProperty("Connection", "close");
-
                     if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                         StringBuilder sb = new StringBuilder();
@@ -444,7 +456,7 @@ public class MainActivity2 extends AppCompatActivity {
                         return sb.toString();
                     }
                 }
-            } catch (Exception e) { 
+            } catch (Exception e) {
                 Log.e("WEATHER_HOME", "Error: " + e.getMessage());
             } finally {
                 if (conn != null) conn.disconnect();
@@ -501,8 +513,11 @@ public class MainActivity2 extends AppCompatActivity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("task_reminder", "Curator", NotificationManager.IMPORTANCE_HIGH);
-            getSystemService(NotificationManager.class).createNotificationChannel(channel);
+            NotificationChannel channel = new NotificationChannel("reminder_channel", "Reminders", NotificationManager.IMPORTANCE_HIGH);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
         }
     }
 
